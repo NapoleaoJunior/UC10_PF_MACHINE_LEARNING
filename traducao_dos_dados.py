@@ -45,7 +45,7 @@ df["escolaridade_pais"] = df["escolaridade_pais"].replace({
 })
 # Salvar CSV traduzido
 df.to_csv(
-    r"desempenho_estudantil\student_performance_dataset_pt.csv",
+    r"desempenho_estudantil\traducao_dados.csv",
     index=False,
     encoding="utf-8-sig"
 )
