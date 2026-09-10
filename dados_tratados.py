@@ -43,7 +43,7 @@ df.to_csv(
     r"desempenho_estudantil\tratamento_dados_binario.csv",
     index=False,
     encoding="utf-8-sig",
-    na_rep="NULL"
+    na_rep="0"
 )
 
 print("\nArquivo tratado com sucesso!")
