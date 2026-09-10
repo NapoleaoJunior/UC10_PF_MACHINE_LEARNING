@@ -1,5 +1,5 @@
 import pandas as pd
-
+import numpy as np
 # Carregar CSV
 df = pd.read_csv(
     r"desempenho_estudantil\student_performance_dataset.csv",
@@ -43,11 +43,13 @@ df["escolaridade_pais"] = df["escolaridade_pais"].replace({
     "Masters": "Mestrado",
     "PhD": "Doutorado"
 })
-# Salvar CSV traduzido
+df = df.replace(r'^\s*$', None, regex=True)
+print(df.isnull().sum())
 df.to_csv(
     r"desempenho_estudantil\traducao_dados.csv",
     index=False,
-    encoding="utf-8-sig"
+    encoding="utf-8-sig",
+    na_rep="NULL"
 )
 print("Arquivo traduzido com sucesso!")
 print(df.head())

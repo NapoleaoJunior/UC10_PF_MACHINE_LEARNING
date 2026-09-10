@@ -36,12 +36,14 @@ df["trabalho_meio_periodo"] = df["trabalho_meio_periodo"].replace({
     "Sim": 1,
     "Não": 0
 })
-
+df = df.replace(r'^\s*$', None, regex=True)
+print(df.isnull().sum())
 # Salvar o novo arquivo tratado
 df.to_csv(
     r"desempenho_estudantil\tratamento_dados_binario.csv",
     index=False,
-    encoding="utf-8-sig"
+    encoding="utf-8-sig",
+    na_rep="NULL"
 )
 
 print("\nArquivo tratado com sucesso!")
