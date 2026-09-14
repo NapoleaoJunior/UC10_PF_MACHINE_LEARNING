@@ -1,5 +1,7 @@
 import pandas as pd
-from sklearn.ensemble import RandomForestClassifier 
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler 
 
 # Carregar CSV traduzido
 df = pd.read_csv(r"desempenho_estudantil\tratamento_dados_binario.csv")
@@ -20,14 +22,13 @@ X = df[
 #variavel alvo
 y = df["nota_final"]
 #normaliza o espaço de caracteristicas
-
-
-
-
+scaler = StandardScaler()
+x_scaled = scaler.fit_transform(X)
 #seperar os dados em treino e teste
-
-
-
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.3, random_state=42
+)
+# criar o modelo de Random Forest
 modelo = RandomForestClassifier(n_estimators=100, random_state=42)
 print(df["nota_final"].unique())
 modelo.fit(X, y)
