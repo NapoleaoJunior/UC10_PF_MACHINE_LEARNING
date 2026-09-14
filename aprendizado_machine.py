@@ -19,19 +19,32 @@ X = df[
         "pontuacao_prova_final"
     ]
 ]
-#variavel alvo
+# variavel alvo
 y = df["nota_final"]
-#normaliza o espaço de caracteristicas
+# normaliza o espaço de caracteristicas
 scaler = StandardScaler()
 x_scaled = scaler.fit_transform(X)
-#seperar os dados em treino e teste
+# seperar os dados em treino e teste
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.3, random_state=42
 )
 # criar o modelo de Random Forest
 modelo = RandomForestClassifier(n_estimators=100, random_state=42)
 print(df["nota_final"].unique())
-modelo.fit(X, y)
+# criar o modelo de Random Forest
+modelo = RandomForestClassifier(n_estimators=100, random_state=42)
+
+# treinar com 70%
+modelo.fit(X_train, y_train)
+
+# testar com 30%
+y_pred = modelo.predict(X_test)
+
+print("Valores reais:")
+print(y_test.head())
+
+print("\nValores previstos:")
+print(y_pred[:5])
 novo_aluno = pd.DataFrame({
     "genero": [1],
     "horas_estudo": [4.5],
@@ -47,3 +60,12 @@ novo_aluno = pd.DataFrame({
 previsao = modelo.predict(novo_aluno)
 
 print("Nota prevista:", previsao[0])
+# Fazer previsões utilizando apenas os 30% de teste
+y_pred = modelo.predict(X_test)
+
+# Mostrar algumas previsões
+print("Valores reais:")
+print(y_test.head())
+
+print("\nValores previstos:")
+print(y_pred[:5])
