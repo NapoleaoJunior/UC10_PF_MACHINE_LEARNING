@@ -38,6 +38,21 @@ df["trabalho_meio_periodo"] = df["trabalho_meio_periodo"].replace({
 })
 df = df.replace(r'^\s*$', None, regex=True)
 print(df.isnull().sum())
+
+# ---------------------------------------------------------------
+# Binarizar a nota final:  A, B, C = Aprovado (1)  |  D, F = Reprovado (0)
+# ---------------------------------------------------------------
+mapa_nota = {"A": 1, "B": 1, "C": 1, "D": 0, "F": 0}
+df["nota_final"] = df["nota_final"].map(mapa_nota)
+
+# Se quiser ser mais rígido (só A e B aprovam), use:
+# mapa_nota = {"A": 1, "B": 1, "C": 0, "D": 0, "F": 0}
+
+print("\nDistribuição de 'nota_final' APÓS binarização:")
+print(df["nota_final"].value_counts())
+print(f"Valores únicos: {sorted(df['nota_final'].dropna().unique())}")
+
+
 # Salvar o novo arquivo tratado
 df.to_csv(
     r"desempenho_estudantil\tratamento_dados_binario.csv",
