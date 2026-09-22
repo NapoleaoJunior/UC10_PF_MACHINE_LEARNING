@@ -1,84 +1,103 @@
-# Student Performance ML — Projeto Integrador
+# Student Performance ML 🎓
 
-Previsão do desempenho acadêmico de estudantes (Aprovado/Reprovado) a partir
-de hábitos de estudo e variáveis de estilo de vida, usando classificação
-com Machine Learning.
+ ## Projeto Integrador — UC 10 | Ciência de Dados
 
-## Dataset
+ Projeto de Machine Learning para prever o desempenho acadêmico de estudantes, classificando-os como **Aprovado** ou **Reprovado**, com base em hábitos de estudo e características de estilo de vida.
 
-[Student Performance & Study Habits Dataset — Kaggle](https://www.kaggle.com/datasets/harshadapatil31/student-performance-and-study-habits-dataset)
+ ## 📊 Dataset
 
-## Objetivo
+ **Student Performance & Study Habits Dataset — Kaggle**
 
-Dado um conjunto de características de um estudante (horas de estudo, sono,
-frequência, etc.), prever se ele será **Aprovado** ou **Reprovado**
-(classificação binária), testando diferentes classificadores e configurações
-de PCA para encontrar o melhor modelo.
+ Coloque o arquivo CSV em:
 
-## Pipeline
+```
+desempenho_estudantil/student_performance_dataset.csv
+```
 
-1. **Aquisição dos dados** — leitura do CSV com Pandas
-2. **Análise exploratória** — estatísticas, gráficos, correlações
-3. **Limpeza** — remoção de dados omissos e duplicados
-4. **Balanceamento** — equalização das classes com SMOTE (aplicado só no treino)
-5. **Treino/Teste** — split 80/20 estratificado
-6. **Padronização** — StandardScaler
-7. **PCA** — testado com 2, 3, 4 e 5 componentes
-8. **Machine Learning** — KNN, Decision Tree e Random Forest (com GridSearchCV)
-9. **Validação** — Accuracy, Precision, Recall, F1-Score
-10. **Matriz de confusão** — para cada modelo
-11. **Comparação dos modelos** — tabela e gráfico comparativo
-12. **Melhor modelo** — selecionado por F1-macro
-13. **Teste final** — avaliação no conjunto de teste nunca visto
+ ## 🛠️ Tecnologias
 
-## Como rodar
+ - Python
+- Pandas
+- NumPy
+- Scikit-learn
+- imbalanced-learn
+- Matplotlib
+- Seaborn
 
-```bash
-# 1. Criar ambiente virtual (opcional, mas recomendado)
+ ## 🚀 Como rodar
+
+ ### 1\. Criar o ambiente virtual
+
+ **Windows:**
+
+```
 python -m venv venv
-source venv/bin/activate   # Windows: venv\Scripts\activate
-
-# 2. Instalar dependências
-pip install -r requirements.txt
-
-# 3. Baixar o dataset do Kaggle e salvar em:
-#    data/student_performance_dataset.csv
-
-# 4. Rodar a pipeline, na ordem:
-cd src
-python 01_analise.py        # gera gráficos e mostra colunas reais do dataset
-# --> ajuste config.py com o nome real da coluna alvo, se necessário
-python 02_tratamento.py
-python 03_balanceamento.py
-python 04_modelos.py
-python 05_avaliacao.py
+venv\Scripts\activate
 ```
 
-## Estrutura do projeto
+ **Linux/macOS:**
 
 ```
-student-performance-ml/
-├── data/                    # dataset bruto e processado
-├── notebooks/                # EDA exploratória em Jupyter
-├── src/                      # scripts da pipeline
-│   ├── config.py
-│   ├── 01_analise.py
-│   ├── 02_tratamento.py
-│   ├── 03_balanceamento.py
-│   ├── 04_modelos.py
-│   └── 05_avaliacao.py
-├── models/                   # modelos treinados (.pkl)
-├── reports/graficos/         # gráficos gerados (EDA, PCA, matriz de confusão)
-├── requirements.txt
-└── README.md
+python3 -m venv venv
+source venv/bin/activate
 ```
 
-## Resultados
+ ### 2\. Instalar as dependências
 
-Após rodar `05_avaliacao.py`, a tabela comparativa fica em
-`reports/comparacao_modelos.csv` e o melhor modelo salvo em
-`models/melhor_modelo.pkl`.
+```
+pip install pandas numpy matplotlib seaborn scikit-learn imbalanced-learn
+```
 
-> ⚠️ Se a acurácia média ficar abaixo de 50%, o script emite um alerta —
-> sinal para revisar classificador, hiperparâmetros ou pré-processamento.
+ ### 3\. Colocar o dataset
 
+ Salve o arquivo baixado do Kaggle em:
+
+```
+desempenho_estudantil/student_performance_dataset.csv
+```
+
+ ### 4\. Executar os scripts
+
+ Execute na seguinte ordem:
+
+```
+python traducao_dos_dados.py
+python dados_tratados.py
+python aprendizado_machine.py
+```
+
+ ### 5\. Conferir os resultados
+
+ Os gráficos e tabelas gerados ficam na pasta:
+
+```
+reports/
+```
+
+ **Principais arquivos:**
+
+ - `comparacao_modelos.csv` — resultados dos modelos;
+- `comparacao_modelos.png` — comparação dos modelos;
+- `pca_2d.png` — visualização do PCA;
+- `pca_variancia.png` — variância explicada;
+- `cm_pca*_k*.png` — matrizes de confusão.
+
+ O terminal também apresenta o **melhor modelo**, seu desempenho e uma **previsão para um novo estudante**.
+
+ ## 🤖 Modelos utilizados
+
+ O projeto testa combinações de:
+
+ - **PCA:** 2, 3, 4 e 5 componentes;
+- **KNN:** `k = 3`, `5` e `7`;
+- **SMOTE:** balanceamento aplicado somente aos dados de treinamento;
+- **F1-macro:** utilizado para selecionar o modelo final.
+
+ ## 👥 Autores
+
+ **Projeto Integrador — UC 10**\
+ **Curso de Ciência de Dados**
+
+- Napoleão Júnior
+- Tainara Almeida
+- Júlia Stefany 
