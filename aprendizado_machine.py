@@ -243,7 +243,7 @@ print(pd.DataFrame(resultados).sort_values("f1_macro", ascending=False)
       .to_string(index=False), "\n")
 
 # ------------------------------------------------------------------
-# 7.4) RANDOM FOREST (comparação com KNN — exigido pelo professor)
+# 7.4) RANDOM FOREST (comparação com KNN)
 # ------------------------------------------------------------------
 for n in componentes:
     pca = PCA(n_components=n, random_state=RANDOM_STATE)
