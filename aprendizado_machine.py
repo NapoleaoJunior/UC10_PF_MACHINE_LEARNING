@@ -99,7 +99,7 @@ if len(df) < antes:
 print(f"[2.3] Distribuição final: {df[target_col].value_counts().to_dict()}\n")
 
 # ------------------------------------------------------------------
-# 3) FEATURES E TARGET
+# 3) SEPARAÇÃO DE características (X) e classe (y)
 # ------------------------------------------------------------------
 features = [
     "genero",
