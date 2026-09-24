@@ -1,9 +1,16 @@
+from imblearn.over_sampling import SMOTE
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import classification_report, confusion_matrix
+IMBLEARN_OK, RANDOM_STATE = True, 42
+try:
+    from imblearn.over_sampling import SMOTE
+    IMBLEARN_OK = True
+except ImportError:
+    IMBLEARN_OK = False
 # Carregar CSV traduzido
 df = pd.read_csv(r"desempenho_estudantil\tratamento_dados_binario_inicio.csv")
 features = [
@@ -25,6 +32,19 @@ print("[6] StandardScaler ajustado no treino e aplicado no teste.\n")
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.3, random_state=42, stratify=y
 )
+if IMBLEARN_OK:
+    try:
+        smote = SMOTE(random_state=RANDOM_STATE)
+        X_train, y_train = smote.fit_resample(X_train, y_train)
+        print("[5] SMOTE aplicado APENAS no treino.")
+    except ValueError as e:
+        print(f"[5] SMOTE falhou ({e}) — seguindo sem balanceamento.")
+else:
+    print("[5] imblearn não instalado — pulando SMOTE "
+          "(instale com: pip install imbalanced-learn)")
+
+print("Distribuição pós-balanceamento (treino):")
+print(pd.Series(y_train).value_counts(), "\n")
 # normaliza o espaço de caracteristicas
 scaler = StandardScaler()
 X_train_s = scaler.fit_transform(X_train)
