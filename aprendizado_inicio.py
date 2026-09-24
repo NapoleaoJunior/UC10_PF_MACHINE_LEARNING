@@ -1,8 +1,11 @@
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import classification_report, confusion_matrix
 # Carregar CSV traduzido
-df = pd.read_csv(r"desempenho_estudantil\tratamento_dados_binario.csv")
+df = pd.read_csv(r"desempenho_estudantil\tratamento_dados_binario_inicio.csv")
 features = [
     "genero",
     "horas_estudo",
@@ -17,23 +20,34 @@ features = [
 ]
 X = df[features]
 y = df["nota_final"]
-# normaliza o espaço de caracteristicas
+print("[6] StandardScaler ajustado no treino e aplicado no teste.\n")
 # seperar os dados em treino e teste
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.3, random_state=42, stratify=y
 )
+# normaliza o espaço de caracteristicas
+scaler = StandardScaler()
+X_train_s = scaler.fit_transform(X_train)
+X_test_s  = scaler.transform(X_test)
 # criar o modelo de Random Forest
 modelo = RandomForestClassifier(n_estimators=100, random_state=42)
 print(df["nota_final"].unique())
-# criar o modelo de Random Forest
-modelo = RandomForestClassifier(n_estimators=100, random_state=42)
+
 
 # treinar com 70%
 modelo.fit(X_train, y_train)
 
 # testar com 30%
 y_pred = modelo.predict(X_test)
+acuracia = accuracy_score(y_test, y_pred)
+print("\nAcurácia:")
+print(f"{acuracia:.2%}")
 
+print("\nMatriz de Confusão:")
+print(confusion_matrix(y_test, y_pred))
+
+print("\nRelatório de Classificação:")
+print(classification_report(y_test, y_pred))
 print("Valores reais:")
 print(y_test.head())
 
@@ -52,9 +66,8 @@ novo_aluno = pd.DataFrame({
     "nota_anterior": [75],
     "pontuacao_prova_final": [80]
 })
-novo_aluno = novo_aluno[X.columns]
 previsao = modelo.predict(novo_aluno)
-print("Previsão:", previsao)
+print("Previsão:", previsao[0])
 if previsao[0] == 1:
     print("Aluno APROVADO ✅")
 else:
@@ -64,7 +77,16 @@ print("nota_final:", modelo.predict_proba(novo_aluno))
 # Fazer previsões utilizando apenas os 30% de teste
 y_pred = modelo.predict(X_test)
 # Mostrar algumas previsões
-print("Valores reais:")
-print(y_test.head())
-print("\nValores previstos:")
-print(y_pred[:5])
+acuracia = accuracy_score(y_test, y_pred)
+print("\n========================")
+print("RESULTADO FINAL")
+print("========================")
+print(f"Acurácia do Modelo: {acuracia:.2%}")
+if acuracia >= 0.90:
+    print("Modelo EXCELENTE ⭐")
+elif acuracia >= 0.80:
+    print("Modelo BOM ✅")
+elif acuracia >= 0.70:
+    print("Modelo ACEITÁVEL ⚠️")
+else:
+    print("Modelo precisa melhorar ❌")
