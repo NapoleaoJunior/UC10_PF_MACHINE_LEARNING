@@ -1,6 +1,6 @@
 """
 PI - UC 10 | Aprendizado de Máquina
-Classificação binária: Aprovado (1) / Reprovado (0)
+Classificação MULTICLASSE: A, B, C, D, F
 
 Pipeline (segue as orientações do professor):
   Aquisição -> Limpeza/Tratamento -> Balanceamento (SMOTE, só no treino)
@@ -44,6 +44,9 @@ CSV_PATH = r"desempenho_estudantil\tratamento_dados_binario.csv"
 OUT_DIR  = "reports"
 os.makedirs(OUT_DIR, exist_ok=True)
 
+# Ordem canônica das notas (para eixos de matriz de confusão e relatórios)
+CLASSES = ["A", "B", "C", "D", "F"]
+
 # ------------------------------------------------------------------
 # 1) AQUISIÇÃO DOS DADOS
 # ------------------------------------------------------------------
@@ -64,8 +67,23 @@ antes = len(df)
 df = df.dropna()
 print(f"[2.2] Linhas com dados omissos removidas: {antes - len(df)}")
 
-# 2.3 Garantir que o target é binário (0/1)
+# 2.3 Garantir que o target está no formato multiclasse (A, B, C, D, F)
 target_col = "nota_final"
+
+# Normaliza possíveis variações (ex.: 'a', 'F ', 'f')
+df[target_col] = (
+    df[target_col]
+    .astype(str)
+    .str.strip()
+    .str.upper()
+)
+
+# Mantém apenas notas válidas
+validos = df[target_col].isin(CLASSES)
+if (~validos).any():
+    print(f"[2.3] Removendo {(~validos).sum()} linhas com notas fora de {CLASSES}")
+    df = df[validos].copy()
+
 
 # ------------------------------------------------------------------
 # 3) SEPARAÇÃO DE características (X) e classe (y)
@@ -85,13 +103,13 @@ X = df[features].copy()
 y = df[target_col].copy()
 
 print("\nDistribuição original das classes:")
-print(y.value_counts(), "\n")
+print(y.value_counts().reindex(CLASSES), "\n")
 
 # Plot: distribuição das classes (antes)
-fig, ax = plt.subplots(figsize=(6, 4))
-sns.countplot(x=y, palette="Set2", ax=ax)
+fig, ax = plt.subplots(figsize=(7, 4))
+sns.countplot(x=y, order=CLASSES, palette="Set2", ax=ax)
 ax.set_title("Distribuição das classes (antes do balanceamento)")
-ax.set_xlabel("Classe (0 = Reprovado | 1 = Aprovado)")
+ax.set_xlabel("Nota final")
 plt.tight_layout()
 plt.savefig(os.path.join(OUT_DIR, "dist_classes_antes.png"), dpi=120)
 plt.close()
@@ -109,9 +127,12 @@ print(f"[4] Treino: {X_train.shape} | Teste: {X_test.shape}")
 # ------------------------------------------------------------------
 if IMBLEARN_OK:
     try:
-        smote = SMOTE(random_state=RANDOM_STATE)
+        # k_neighbors precisa ser menor que a menor classe presente
+        min_class = pd.Series(y_train).value_counts().min()
+        k_neighbors = max(1, min(5, min_class - 1))
+        smote = SMOTE(random_state=RANDOM_STATE, k_neighbors=k_neighbors)
         X_train, y_train = smote.fit_resample(X_train, y_train)
-        print("[5] SMOTE aplicado APENAS no treino.")
+        print(f"[5] SMOTE aplicado APENAS no treino (k_neighbors={k_neighbors}).")
     except ValueError as e:
         print(f"[5] SMOTE falhou ({e}) — seguindo sem balanceamento.")
 else:
@@ -119,12 +140,14 @@ else:
           "(instale com: pip install imbalanced-learn)")
 
 print("Distribuição pós-balanceamento (treino):")
-print(pd.Series(y_train).value_counts(), "\n")
+print(pd.Series(y_train).value_counts().reindex(CLASSES), "\n")
+
 
 # Plot: distribuição pós-balanceamento
-fig, ax = plt.subplots(figsize=(6, 4))
-sns.countplot(x=pd.Series(y_train), palette="Set2", ax=ax)
+fig, ax = plt.subplots(figsize=(7, 4))
+sns.countplot(x=pd.Series(y_train), order=CLASSES, palette="Set2", ax=ax)
 ax.set_title("Distribuição das classes (pós-balanceamento)")
+ax.set_xlabel("Nota final")
 plt.tight_layout()
 plt.savefig(os.path.join(OUT_DIR, "dist_classes_depois.png"), dpi=120)
 plt.close()
@@ -146,16 +169,24 @@ knn_ks      = [3, 5, 7]
 # 7.1 Visualização PCA 2D (com as classes)
 pca2 = PCA(n_components=2, random_state=RANDOM_STATE)
 X_train_pca2 = pca2.fit_transform(X_train_s)
+
+# Mapeia cores por classe
+palette = dict(zip(CLASSES, sns.color_palette("Set1", len(CLASSES))))
+cores = [palette[c] for c in pd.Series(y_train).values]
+
 plt.figure(figsize=(8, 6))
-sns.scatterplot(x=X_train_pca2[:, 0], y=X_train_pca2[:, 1],
-                hue=pd.Series(y_train).values, palette="Set1", alpha=0.7)
+plt.scatter(X_train_pca2[:, 0], X_train_pca2[:, 1],
+            c=cores, alpha=0.7, edgecolor="k", linewidth=0.3)
+for c in CLASSES:
+    plt.scatter([], [], color=palette[c], label=c)
 plt.title("PCA 2D — projeção das classes (treino)")
 plt.xlabel("PC1"); plt.ylabel("PC2")
+plt.legend(title="Nota")
 plt.tight_layout()
 plt.savefig(os.path.join(OUT_DIR, "pca_2d.png"), dpi=120)
 plt.close()
 
-# 7.2 Variância explicada por componente
+# 7.2 Variância explicada
 pca_full = PCA(random_state=RANDOM_STATE).fit(X_train_s)
 plt.figure(figsize=(8, 5))
 plt.bar(range(1, len(pca_full.explained_variance_ratio_) + 1),
@@ -170,7 +201,7 @@ plt.tight_layout()
 plt.savefig(os.path.join(OUT_DIR, "pca_variancia.png"), dpi=120)
 plt.close()
 
-# 7.3 Combinar PCA(n) x KNN(k)
+# 7.3 PCA(n) x KNN(k)
 resultados = []
 
 for n in componentes:
@@ -195,12 +226,10 @@ for n in componentes:
             "recall": round(rec, 4), "f1_macro": round(f1, 4)
         })
 
-        # Matriz de confusão (seaborn heatmap)
-        cm = confusion_matrix(y_test, y_pred)
-        plt.figure(figsize=(5, 4))
+        cm = confusion_matrix(y_test, y_pred, labels=CLASSES)
+        plt.figure(figsize=(5.5, 4.5))
         sns.heatmap(cm, annot=True, fmt="d", cmap="Blues",
-                    xticklabels=["Reprovado", "Aprovado"],
-                    yticklabels=["Reprovado", "Aprovado"])
+                    xticklabels=CLASSES, yticklabels=CLASSES)
         plt.title(f"Matriz de Confusão — PCA {n} | KNN k={k}\nAcc={acc:.2%}")
         plt.xlabel("Previsto"); plt.ylabel("Real")
         plt.tight_layout()
@@ -211,8 +240,9 @@ print("[7.3] Resultados parciais (KNN):")
 print(pd.DataFrame(resultados).sort_values("f1_macro", ascending=False)
       .to_string(index=False), "\n")
 
+
 # ------------------------------------------------------------------
-# 7.4) RANDOM FOREST (comparação com KNN)
+# 7.4) RANDOM FOREST
 # ------------------------------------------------------------------
 for n in componentes:
     pca = PCA(n_components=n, random_state=RANDOM_STATE)
@@ -242,19 +272,16 @@ for n in componentes:
         "f1_macro": round(f1, 4)
     })
 
-    # Matriz de confusão do RF
-    cm = confusion_matrix(y_test, y_pred_rf)
-    plt.figure(figsize=(5, 4))
+    cm = confusion_matrix(y_test, y_pred_rf, labels=CLASSES)
+    plt.figure(figsize=(5.5, 4.5))
     sns.heatmap(cm, annot=True, fmt="d", cmap="Greens",
-                xticklabels=["Reprovado", "Aprovado"],
-                yticklabels=["Reprovado", "Aprovado"])
+                xticklabels=CLASSES, yticklabels=CLASSES)
     plt.title(f"Matriz de Confusão — PCA {n} | Random Forest\nAcc={acc:.2%}")
     plt.xlabel("Previsto"); plt.ylabel("Real")
     plt.tight_layout()
     plt.savefig(os.path.join(OUT_DIR, f"cm_pca{n}_rf.png"), dpi=120)
     plt.close()
 
-# Consolidar resultados finais (KNN + RF)
 df_res = (pd.DataFrame(resultados)
           .sort_values("f1_macro", ascending=False)
           .reset_index(drop=True))
@@ -264,10 +291,11 @@ print(df_res.to_string(index=False), "\n")
 df_res.to_csv(os.path.join(OUT_DIR, "comparacao_modelos.csv"),
               index=False, encoding="utf-8-sig")
 
+
+
 # ------------------------------------------------------------------
 # 8) GRÁFICOS COMPARATIVOS
 # ------------------------------------------------------------------
-# Gráfico 1: só KNN
 df_knn = df_res[df_res["k"] != "RF"].copy()
 
 if not df_knn.empty:
@@ -284,7 +312,6 @@ if not df_knn.empty:
 else:
     print("[8] Sem resultados de KNN — pulando gráfico do KNN.")
 
-# Gráfico 2: KNN × Random Forest (por PCA)
 df_res_plot = df_res.copy()
 df_res_plot["k"] = df_res_plot["k"].astype(str)
 ordem_k = ["3", "5", "7", "RF"]
@@ -307,10 +334,9 @@ melhor = df_res.iloc[0]
 print("[9] Melhor configuração encontrada:")
 print(melhor.to_dict())
 
-if melhor["acuracia"] < 0.5:
-    print("⚠️  Acurácia < 50% — considere outro classificador/parâmetros.\n")
+if melhor["f1_macro"] < 0.5:
+    print("⚠️  F1-macro < 50% — considere outro classificador/parâmetros.\n")
 
-# --- Re-treina o melhor modelo respeitando o classificador vencedor ---
 pca_best = PCA(n_components=int(melhor["pca"]), random_state=RANDOM_STATE)
 X_tr_best = pca_best.fit_transform(X_train_s)
 X_te_best = pca_best.transform(X_test_s)
@@ -332,25 +358,24 @@ y_pred_best = modelo_best.predict(X_te_best)
 print("\nRelatório final do melhor modelo:")
 print(classification_report(
     y_test, y_pred_best,
-    labels=[0, 1],
-    target_names=["Reprovado", "Aprovado"],
+    labels=CLASSES,
+    target_names=CLASSES,
     zero_division=0
 ))
 
-# Matriz de confusão final do melhor modelo
-cm_best = confusion_matrix(y_test, y_pred_best)
-plt.figure(figsize=(5, 4))
+cm_best = confusion_matrix(y_test, y_pred_best, labels=CLASSES)
+plt.figure(figsize=(6, 5))
 sns.heatmap(cm_best, annot=True, fmt="d", cmap="Oranges",
-            xticklabels=["Reprovado", "Aprovado"],
-            yticklabels=["Reprovado", "Aprovado"])
+            xticklabels=CLASSES, yticklabels=CLASSES)
+rotulo_best = "RF" if melhor["k"] == "RF" else f"KNN k={int(melhor['k'])}"
 plt.title(f"Matriz de Confusão — MELHOR MODELO\n"
-          f"PCA {int(melhor['pca'])} | "
-          f"{'RF' if melhor['k'] == 'RF' else f'KNN k={int(melhor[chr(39)+chr(107)+chr(39)])}' if False else melhor['k']}\n"
+          f"PCA {int(melhor['pca'])} | {rotulo_best}\n"
           f"Acc={melhor['acuracia']:.2%} | F1-macro={melhor['f1_macro']:.4f}")
 plt.xlabel("Previsto"); plt.ylabel("Real")
 plt.tight_layout()
 plt.savefig(os.path.join(OUT_DIR, "cm_melhor_modelo.png"), dpi=120)
 plt.close()
+
 
 # ------------------------------------------------------------------
 # 10) EXEMPLO — previsão para um novo aluno
@@ -360,14 +385,13 @@ novo_aluno = pd.DataFrame({
     "horas_estudo": [4.5],
     "percentual_frequencia": [90],
     "horas_sono": [7],
-    "escolaridade_pais": [2],
+    "escolaridade_pais": [4],
     "acesso_internet": [1],
     "atividades_extracurriculares": [1],
     "trabalho_meio_periodo": [0],
-    "nota_anterior": [75],
+    "nota_anterior": [20],
 })
 novo_s   = scaler.transform(novo_aluno)
 novo_pca = pca_best.transform(novo_s)
 pred     = modelo_best.predict(novo_pca)[0]
-print(f"\n[10] Previsão para o novo aluno: "
-      f"{'APROVADO ✅' if pred == 1 else 'REPROVADO ❌'}")
+print(f"\n[10] Previsão para o novo aluno: nota final = {pred}")
