@@ -42,8 +42,8 @@ print(df.isnull().sum())
 # ---------------------------------------------------------------
 # Binarizar a nota final:  A, B, C = Aprovado (1)  |  D, F = Reprovado (0)
 # ---------------------------------------------------------------
-mapa_nota = {"A": 1, "B": 1, "C": 1, "D": 0, "F": 0}
-df["nota_final"] = df["nota_final"].map(mapa_nota)
+#mapa_nota = {"A": 1, "B": 1, "C": 1, "D": 0, "F": 0}
+#df["nota_final"] = df["nota_final"].map(mapa_nota)
 
 # Se quiser ser mais rígido (só A e B aprovam), use:
 # mapa_nota = {"A": 1, "B": 1, "C": 0, "D": 0, "F": 0}

@@ -66,37 +66,6 @@ print(f"[2.2] Linhas com dados omissos removidas: {antes - len(df)}")
 
 # 2.3 Garantir que o target é binário (0/1)
 target_col = "nota_final"
-valores_unicos = sorted(df[target_col].dropna().unique())
-print(f"[2.3] Valores únicos em '{target_col}': {valores_unicos}")
-
-# Caso A: já é 0/1
-if set(valores_unicos) <= {0, 1}:
-    print("[2.3] Target já está binário (0/1). Mantendo.")
-
-# Caso B: são letras de nota (A-F)
-elif all(isinstance(v, str) for v in valores_unicos):
-    mapa_nota = {"A": 1, "B": 1, "C": 1, "D": 0, "F": 0}
-    df[target_col] = df[target_col].map(mapa_nota)
-    print("[2.3] Target binário convertido de letras (A,B,C=1 | D,F=0).")
-
-# Caso C: notas numéricas 0–100
-elif df[target_col].max() > 1:
-    df[target_col] = (df[target_col] >= 60).astype(int)
-    print("[2.3] Target binarizado por nota de corte (>= 60).")
-
-# Caso D: notas ordinais 0–4
-else:
-    mediana = df[target_col].median()
-    df[target_col] = (df[target_col] >= mediana).astype(int)
-    print(f"[2.3] Target binarizado por mediana ({mediana}).")
-
-# Remove qualquer linha que virou NaN no mapeamento (letras desconhecidas)
-antes = len(df)
-df = df.dropna(subset=[target_col])
-if len(df) < antes:
-    print(f"[2.3] {antes - len(df)} linhas removidas por labels desconhecidos.")
-
-print(f"[2.3] Distribuição final: {df[target_col].value_counts().to_dict()}\n")
 
 # ------------------------------------------------------------------
 # 3) SEPARAÇÃO DE características (X) e classe (y)
